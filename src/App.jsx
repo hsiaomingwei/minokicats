@@ -5,6 +5,8 @@ import { Routes, Route } from 'react-router-dom'
 import Home from './Home.jsx'
 import Shop from './pages/Shop.jsx'
 import Product from './pages/Product.jsx'
+import Success from './pages/Success.jsx'
+import Cancel from './pages/Cancel.jsx'
 
 export default function App() {
   return (
@@ -15,6 +17,8 @@ export default function App() {
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/shop/:category" element={<Category />} />
       <Route path="/product/:id" element={<Product />} />
+      <Route path="/success" element={<Success />} />
+      <Route path="/cancel" element={<Cancel />} />
     </Routes>
   )
 }

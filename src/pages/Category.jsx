@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useCart } from '../context/CartContext.jsx'
 import TopNav from '../components/TopNav.jsx'
 import productImg from '../assets/catnecklace.webp'
+import bowlImg from '../assets/bowl.webp'
 
 const categoryMap = {
   necklaces: {
@@ -18,7 +19,14 @@ const categoryMap = {
   },
   bowls: {
     title: 'Bowls',
-    products: [],
+    products: [
+      {
+        id: 2,
+        name: 'Simple Bowl',
+        price: 3,
+        image: bowlImg,
+      },
+    ],
   },
   grooming: {
     title: 'Grooming',

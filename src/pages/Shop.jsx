@@ -27,14 +27,17 @@ export default function Shop() {
           textAlign: 'center',
         }}
       >
-        <img
-          src={logo}
-          alt="Minoki"
-          style={{
-            height: '96px',
-            marginBottom: '12px',
-          }}
-        />
+        <Link to="/">
+          <img
+            src={logo}
+            alt="Minoki"
+            style={{
+              height: '96px',
+              marginBottom: '12px',
+              cursor: 'pointer',
+            }}
+          />
+        </Link>
 
         <div
           style={{

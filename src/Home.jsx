@@ -116,17 +116,20 @@ function Home() {
           />
 
           {section.showLogo && (
-            <img
-              src={logo}
-              alt="Minoki"
-              style={{
-                position: 'absolute',
-                top: '40px',
-                left: '40px',
-                height: '140px',
-                zIndex: 3,
-              }}
-            />
+            <Link to="/">
+              <img
+                src={logo}
+                alt="Minoki"
+                style={{
+                  position: 'absolute',
+                  top: '40px',
+                  left: '40px',
+                  height: '140px',
+                  zIndex: 3,
+                  cursor: 'pointer',
+                }}
+              />
+            </Link>
           )}
 
           <div
