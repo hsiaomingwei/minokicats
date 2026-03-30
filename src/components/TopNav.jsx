@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useCart } from '../context/CartContext.jsx'
+import { useEffect, useState } from 'react'
 import logo from '../assets/Minoki logo no background.png'
 
 export default function TopNav() {
@@ -7,6 +8,17 @@ export default function TopNav() {
   const isShopPage = location.pathname === '/shop'
   const { cart } = useCart()
   const count = cart.reduce((sum, item) => sum + item.qty, 0)
+
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('minokiUser')
+    if (stored) {
+      setUser(JSON.parse(stored))
+    } else {
+      setUser(null)
+    }
+  }, [location.pathname])
 
   return (
     <>
@@ -35,28 +47,47 @@ export default function TopNav() {
       )}
 
       <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        height: '80px',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 40px',
-        zIndex: 20,
-      }}
-    >
-      <Link
-        to="/cart"
         style={{
-          color: '#fff',
-          textDecoration: 'none',
-          fontSize: '12px',
-          letterSpacing: '1px',
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          height: '80px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          padding: '0 40px',
+          zIndex: 20,
         }}
       >
-        Cart{count > 0 ? ` (${count})` : ''}
-      </Link>
+        {user ? (
+          <span style={{ color: '#fff', fontSize: '12px', letterSpacing: '1px' }}>
+            {user.email}
+          </span>
+        ) : (
+          <Link
+            to="/account"
+            style={{
+              color: '#fff',
+              textDecoration: 'none',
+              fontSize: '12px',
+              letterSpacing: '1px',
+            }}
+          >
+            Account
+          </Link>
+        )}
+
+        <Link
+          to="/cart"
+          style={{
+            color: '#fff',
+            textDecoration: 'none',
+            fontSize: '12px',
+            letterSpacing: '1px',
+          }}
+        >
+          Cart{count > 0 ? ` (${count})` : ''}
+        </Link>
       </div>
     </>
   )

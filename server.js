@@ -10,6 +10,7 @@ dotenv.config()
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 const ordersFile = path.join(process.cwd(), 'data', 'orders.json')
+const usersFile = path.join(process.cwd(), "data", "users.json")
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -84,85 +85,111 @@ function writeOrders(orders) {
   } catch (err) {
     console.error('Write orders error:', err)
   }
+  }
+function readUsers() {
+  try {
+    const data = fs.readFileSync(usersFile, "utf-8")
+    return JSON.parse(data)
+  } catch (err) {
+    console.error("Read users error:", err)
+    return []
+  }
+}
+
+function writeUsers(users) {
+  try {
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2))
+  } catch (err) {
+    console.error("Write users error:", err)
+  }
 }
 
 
-app.get('/api/checkout-session/:id', async (req, res) => {
+app.post("/api/register", (req, res) => {
   try {
-    const session = await stripe.checkout.sessions.retrieve(req.params.id)
-    res.json(session)
-  } catch (err) {
-    console.error('Fetch session error:', err)
-    res.status(500).json({ error: 'Failed to fetch session' })
-  }
-})
+    const { name, email, password } = req.body
 
-
-app.post('/api/create-order-from-session', async (req, res) => {
-  try {
-    const { sessionId } = req.body
-
-    if (!sessionId) {
-      return res.status(400).json({ error: 'Missing sessionId' })
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Name, email and password required" })
     }
 
-    const session = await stripe.checkout.sessions.retrieve(sessionId)
+    const users = readUsers()
 
-    if (session.payment_status !== 'paid') {
-      return res.status(400).json({ error: 'Payment not completed' })
-    }
-
-    const orders = readOrders()
-
-    // prevent duplicate order
-    const exists = orders.find(o => o.stripeSessionId === sessionId)
+    const exists = users.find(u => u.email === email)
     if (exists) {
-      return res.json({ order: exists, message: 'Order already exists' })
+      return res.status(400).json({ error: "User already exists" })
     }
 
-    const items = JSON.parse(session.metadata?.items || '[]')
-
-    const newOrder = {
-      id: `ord_${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      stripeSessionId: sessionId,
-      paymentStatus: session.payment_status,
-      customerEmail: session.customer_details?.email || null,
-      currency: session.currency,
-      amountTotal: session.amount_total,
-      orderStatus: 'processing',
-      items
+    const newUser = {
+      id: `usr_${Date.now()}`,
+      name,
+      email,
+      password,
+      createdAt: new Date().toISOString()
     }
 
-    orders.push(newOrder)
-    writeOrders(orders)
-    await sendOrderEmail(newOrder)
+    users.push(newUser)
+    writeUsers(users)
 
-    res.json({ order: newOrder })
+    res.json({ user: newUser })
   } catch (err) {
-    console.error('Create order error:', err)
-    res.status(500).json({ error: 'Failed to create order' })
+    console.error("Register error:", err)
+    res.status(500).json({ error: "Failed to register user" })
+  }
+})
+
+app.post("/api/login", (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" })
+    }
+
+    const users = readUsers()
+
+    const user = users.find(
+      (u) => u.email === email && u.password === password
+    )
+
+    if (!user) {
+      return res.status(401).json({ error: "Invalid credentials" })
+    }
+
+    res.json({ user })
+  } catch (err) {
+    console.error("Login error:", err)
+    res.status(500).json({ error: "Failed to login" })
   }
 })
 
 
-async function sendOrderEmail(order) {
+app.put("/api/users/:id", (req, res) => {
   try {
-    if (!process.env.EMAIL_HOST) {
-      console.log('Email not configured, skipping email send')
-      return
+    const { id } = req.params
+    const { name, address } = req.body
+
+    const users = readUsers()
+    const index = users.findIndex((u) => u.id === id)
+
+    if (index === -1) {
+      return res.status(404).json({ error: "User not found" })
     }
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
-      to: order.customerEmail,
-      subject: 'Order Confirmation – Minoki Cats',
-      text: `Thank you for your order.\n\nOrder ID: ${order.id}\nAmount: $${(order.amountTotal / 100).toFixed(2)}\n\nWe will begin processing your order shortly.`,
-    })
+    const existingUser = users[index]
 
-    console.log('Order email sent:', order.id)
+    const updatedUser = {
+      ...existingUser,
+      name: typeof name === "string" ? name : existingUser.name,
+      address: typeof address === "string" ? address : existingUser.address || ""
+    }
+
+    users[index] = updatedUser
+    writeUsers(users)
+
+    res.json({ user: updatedUser })
   } catch (err) {
-    console.error('Email send error:', err)
+    console.error("Update user error:", err)
+    res.status(500).json({ error: "Failed to update user" })
   }
-}
-
+})

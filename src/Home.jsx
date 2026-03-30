@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useCart } from './context/CartContext.jsx'
 import logo from './assets/Minoki logo no background.png'
 
@@ -38,6 +39,16 @@ const sections = [
 function Home() {
   const { cart } = useCart()
   const count = cart.reduce((sum, item) => sum + item.qty, 0)
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('minokiUser')
+    if (stored) {
+      setUser(JSON.parse(stored))
+    } else {
+      setUser(null)
+    }
+  }, [])
 
   return (
     <div style={{ background: '#000', scrollBehavior: 'smooth' }}>
@@ -75,7 +86,7 @@ function Home() {
             letterSpacing: '1px',
           }}
         >
-          Account
+          {user ? 'My Account' : 'Account'}
         </Link>
 
         <Link
