@@ -40,7 +40,6 @@ function Home() {
   const { cart } = useCart()
   const count = cart.reduce((sum, item) => sum + item.qty, 0)
   const [user, setUser] = useState(null)
-  const [scrollY, setScrollY] = useState(0)
 
   useEffect(() => {
     const stored = localStorage.getItem('minokiUser')
@@ -50,21 +49,6 @@ function Home() {
       setUser(null)
     }
   }, [])
-
-  useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY)
-    onScroll()
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  const riseStart = 300
-  const riseDistance = 700
-  const riseProgress = Math.min(Math.max((scrollY - riseStart) / riseDistance, 0), 1)
-
-  const slideStart = 1400
-  const slideDistance = 700
-  const slideProgress = Math.min(Math.max((scrollY - slideStart) / slideDistance, 0), 1)
 
   return (
     <div style={{ background: '#000', scrollBehavior: 'smooth' }}>
@@ -118,31 +102,16 @@ function Home() {
         </Link>
       </div>
 
-      <Link to="/">
-        <img
-          src={logo}
-          alt="Minoki"
-          style={{
-            position: 'fixed',
-            top: '40px',
-            left: '40px',
-            height: '140px',
-            zIndex: 30,
-            cursor: 'pointer',
-          }}
-        />
-      </Link>
-
       {sections.map((section, index) => (
         <section
           key={section.title}
           style={{
-            position: 'sticky',
-            top: 0,
+            position: index === 1 ? 'sticky' : 'relative',
+            top: index === 1 ? 0 : 'auto',
             width: '100%',
-            height: '120vh',
+            height: index === 1 ? '120vh' : '100vh',
             overflow: 'hidden',
-            zIndex: index,
+            zIndex: index >= 2 ? 2 : index === 1 ? 1 : 0,
             background: '#000',
           }}
         >
@@ -156,6 +125,23 @@ function Home() {
               display: 'block',
             }}
           />
+
+          {section.showLogo && (
+            <Link to="/">
+              <img
+                src={logo}
+                alt="Minoki"
+                style={{
+                  position: 'absolute',
+                  top: '40px',
+                  left: '40px',
+                  height: '140px',
+                  zIndex: 3,
+                  cursor: 'pointer',
+                }}
+              />
+            </Link>
+          )}
 
           <div
             style={{
