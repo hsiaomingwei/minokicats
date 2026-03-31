@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useCart } from './context/CartContext.jsx'
 import logo from './assets/Minoki logo no background.png'
 
@@ -40,8 +40,7 @@ function Home() {
   const { cart } = useCart()
   const count = cart.reduce((sum, item) => sum + item.qty, 0)
   const [user, setUser] = useState(null)
-  const [activeIndex, setActiveIndex] = useState(0)
-  const sectionRefs = useRef([])
+  const [scrollY, setScrollY] = useState(0)
 
   useEffect(() => {
     const stored = localStorage.getItem('minokiUser')
@@ -53,43 +52,25 @@ function Home() {
   }, [])
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const candidates = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => {
-            const aIndex = Number(a.target.dataset.index)
-            const bIndex = Number(b.target.dataset.index)
-            const ratioDiff = b.intersectionRatio - a.intersectionRatio
-
-            if (Math.abs(ratioDiff) > 0.02) return ratioDiff
-            return bIndex - aIndex
-          })
-
-        if (candidates.length > 0) {
-          const nextIndex = Number(candidates[0].target.dataset.index)
-          setActiveIndex(nextIndex)
-        }
-      },
-      {
-        root: null,
-        rootMargin: '-35% 0px -35% 0px',
-        threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
-      }
-    )
-
-    const currentSections = sectionRefs.current
-    currentSections.forEach((section) => {
-      if (section) observer.observe(section)
-    })
-
-    return () => {
-      currentSections.forEach((section) => {
-        if (section) observer.unobserve(section)
-      })
-      observer.disconnect()
-    }
+    const onScroll = () => setScrollY(window.scrollY)
+    onScroll()
+    window.addEventListener('scroll', onScroll)
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  const riseStart = 300
+  const riseDistance = 700
+  const riseProgress = Math.min(Math.max((scrollY - riseStart) / riseDistance, 0), 1)
+
+  const slideStart = 1400
+  const slideDistance = 700
+  const slideProgress = Math.min(Math.max((scrollY - slideStart) / slideDistance, 0), 1)
+
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1000
+  const activeIndex = Math.min(
+    sections.length - 1,
+    Math.max(0, Math.floor(scrollY / (viewportHeight * 0.55)))
+  )
 
   return (
     <div style={{ background: '#000', scrollBehavior: 'smooth' }}>
@@ -168,15 +149,7 @@ function Home() {
           zIndex: 31,
         }}
       >
-        <p
-          style={{
-            marginTop: '18px',
-            lineHeight: '1.6',
-            fontSize: '13px',
-            letterSpacing: '0.5px',
-            opacity: 0.85,
-          }}
-        >
+        <p style={{ marginTop: '18px', lineHeight: '1.6', fontSize: '13px', letterSpacing: '0.5px', opacity: 0.85 }}>
           {sections[activeIndex].text}
         </p>
       </div>
@@ -184,10 +157,6 @@ function Home() {
       {sections.map((section, index) => (
         <section
           key={section.title}
-          ref={(el) => {
-            sectionRefs.current[index] = el
-          }}
-          data-index={index}
           style={{
             position: 'sticky',
             top: 0,
